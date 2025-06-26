@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 import subprocess
 import os
 import json
+import time # Χρησιμοποιείται για ένα μικρό delay για καλύτερη εμφάνιση μηνυμάτων
 
 # Όνομα αρχείου για την αποθήκευση των προφίλ
 PROFILES_FILE = "git_profiles.json"
@@ -11,14 +12,14 @@ class GitGUIApp:
     def __init__(self, master):
         self.master = master
         master.title("Εύκολος Git Ανεβάτης")
-        master.geometry("750x730") # Αυξάνουμε το μέγεθος λόγω νέων στοιχείων
+        master.geometry("750x760") # Αυξάνουμε το μέγεθος λόγω νέων στοιχείων και του νέου κουμπιού
         master.resizable(False, False)
 
         # Μεταβλητές
         self.project_path = tk.StringVar()
         self.repo_url = tk.StringVar()
         self.commit_message = tk.StringVar(value="Αρχικό commit")
-        self.current_branch = tk.StringVar(value="main") # Νέα μεταβλητή για το branch, με προεπιλογή 'main'
+        self.current_branch = tk.StringVar(value="main") # Μεταβλητή για το branch, με προεπιλογή 'main'
         
         # Μεταβλητές για τη διαχείριση προφίλ
         self.profiles = self.load_profiles()
@@ -48,8 +49,7 @@ class GitGUIApp:
         # Current Branch (Νέο πεδίο)
         tk.Label(master, text="Τρέχον Branch:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
         tk.Entry(master, textvariable=self.current_branch, width=60).grid(row=3, column=1, padx=5, pady=5, columnspan=2)
-        # Θα ενημερώνεται αυτόματα όταν επιλέγεται φάκελος έργου
-
+        
         # --- Profile Management Section ---
         profile_frame = tk.LabelFrame(master, text="Διαχείριση Προφίλ Git")
         profile_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
@@ -83,26 +83,30 @@ class GitGUIApp:
         tk.Label(profile_frame, text="Προεπιλεγμένο Branch:").grid(row=4, column=0, padx=5, pady=2, sticky="w")
         tk.Entry(profile_frame, textvariable=self.new_profile_default_branch, width=28).grid(row=4, column=1, padx=5, pady=2, sticky="ew")
 
-        # --- Git Operations Buttons ---
+        # --- Git Operations Buttons (Individual) ---
         button_frame = tk.Frame(master)
-        button_frame.grid(row=5, column=0, columnspan=3, pady=10)
+        button_frame.grid(row=5, column=0, columnspan=3, pady=10) # Ενημέρωση σειράς
 
         tk.Button(button_frame, text="1. Αρχικοποίηση Git", command=self.init_git, width=17).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="2. Προσθήκη Όλων", command=self.add_all, width=17).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="3. Commit", command=self.commit_files, width=17).pack(side=tk.LEFT, padx=5)
         tk.Button(button_frame, text="4. Push στο Git", command=self.push_to_git, width=17).pack(side=tk.LEFT, padx=5) 
 
+        # --- Νέο κουμπί "Εκτέλεση Όλων" (τοποθετείται κάτω από τα 4) ---
+        tk.Button(master, text="Εκτέλεση Όλων", command=self.execute_all_git_operations, 
+                  font=("Helvetica", 10, "bold"), bg="lightblue", fg="darkblue", width=40).grid(row=6, column=0, columnspan=3, pady=15) # Ενημέρωση σειράς
+
         # Separator
-        tk.Frame(master, height=2, bd=1, relief=tk.SUNKEN).grid(row=6, column=0, columnspan=3, pady=10, sticky="ew")
+        tk.Frame(master, height=2, bd=1, relief=tk.SUNKEN).grid(row=7, column=0, columnspan=3, pady=10, sticky="ew") # Ενημέρωση σειράς
 
         # Output Console
-        tk.Label(master, text="Έξοδος Κονσόλας:").grid(row=7, column=0, padx=10, pady=5, sticky="w")
+        tk.Label(master, text="Έξοδος Κονσόλας:").grid(row=8, column=0, padx=10, pady=5, sticky="w") # Ενημέρωση σειράς
         self.output_console = scrolledtext.ScrolledText(master, wrap=tk.WORD, width=80, height=15, bg="#333", fg="lightgreen", font=("Consolas", 10))
-        self.output_console.grid(row=8, column=0, columnspan=3, padx=10, pady=5)
+        self.output_console.grid(row=9, column=0, columnspan=3, padx=10, pady=5) # Ενημέρωση σειράς
         self.output_console.config(state="disabled") # Make it read-only
 
         # Clear Console Button
-        tk.Button(master, text="Εκκαθάριση Κονσόλας", command=self.clear_console).grid(row=9, column=0, columnspan=3, pady=5)
+        tk.Button(master, text="Εκκαθάριση Κονσόλας", command=self.clear_console).grid(row=10, column=0, columnspan=3, pady=5) # Ενημέρωση σειράς
 
         self.print_to_console("Καλώς ήρθατε στον Εύκολο Git Ανεβάτη!\n")
         self.print_to_console("Βεβαιωθείτε ότι το Git είναι εγκατεστημένο και διαθέσιμο στο PATH του συστήματός σας.\n")
@@ -226,17 +230,17 @@ class GitGUIApp:
         selected_name = self.selected_profile_name.get()
         if not selected_name or selected_name == "-- Καθόλου Προφίλ --":
             messagebox.showwarning("Προειδοποίηση", "Παρακαλώ επιλέξτε ένα προφίλ για εφαρμογή.")
-            return
+            return False # Επιστρέφουμε False για να δείξουμε αποτυχία
 
         profile_data = self.profiles.get(selected_name)
         if not profile_data:
             messagebox.showerror("Σφάλμα", "Το επιλεγμένο προφίλ δεν βρέθηκε.")
-            return
-        
+            return False # Επιστρέφουμε False
+
         project_path = self.project_path.get()
         if not project_path:
             messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα φάκελο έργου πρώτα.")
-            return
+            return False # Επιστρέφουμε False
         
         self.print_to_console(f"\n--- Εφαρμογή προφίλ '{selected_name}' στο τοπικό repository ---\n")
         
@@ -244,12 +248,12 @@ class GitGUIApp:
         # Χρησιμοποιούμε --local για να ορίσουμε το config μόνο για αυτό το repo
         if not self.run_git_command(["git", "config", "--local", "user.email", profile_data["email"]]):
             messagebox.showerror("Σφάλμα", "Αποτυχία ρύθμισης user.email.")
-            return
+            return False # Επιστρέφουμε False
         
         # Ρύθμιση user.name
         if not self.run_git_command(["git", "config", "--local", "user.name", profile_data["username"]]):
             messagebox.showerror("Σφάλμα", "Αποτυχία ρύθμισης user.name.")
-            return
+            return False # Επιστρέφουμε False
 
         # Ρύθμιση του πεδίου "Τρέχον Branch" με το προεπιλεγμένο branch του προφίλ
         default_branch = profile_data.get('default_branch', 'main') # Παίρνουμε το branch ή 'main' αν δεν υπάρχει
@@ -258,6 +262,7 @@ class GitGUIApp:
         
         messagebox.showinfo("Επιτυχία", f"Το προφίλ '{selected_name}' εφαρμόστηκε επιτυχώς στο τοπικό repository!")
         self.print_to_console(f"Το προφίλ '{selected_name}' εφαρμόστηκε: Email: {profile_data['email']}, Όνομα: {profile_data['username']}.\n")
+        return True # Επιστρέφουμε True για επιτυχία
 
     def print_to_console(self, text):
         """Προσθέτει κείμενο στην περιοχή εξόδου της κονσόλας."""
@@ -281,10 +286,6 @@ class GitGUIApp:
             self.print_to_console("Σφάλμα: Δεν έχει επιλεχθεί φάκελος έργου για την εκτέλεση της εντολής.\n")
             return False
         
-        # Ειδικός χειρισμός για την περίπτωση που το project_path είναι κενό αλλά η εντολή είναι 'git init'
-        # (αν και το init πρέπει να γίνεται σε φάκελο, οπότε ο έλεγχος παραμένει)
-        # Αυτός ο έλεγχος είναι κυρίως για config commands.
-
         original_dir = os.getcwd()
         try:
             if project_path: # Μόνο αν υπάρχει project_path, πηγαίνουμε σε αυτόν τον κατάλογο
@@ -378,25 +379,35 @@ class GitGUIApp:
             self.print_to_console("Git repository αρχικοποιήθηκε επιτυχώς.\n")
             messagebox.showinfo("Επιτυχία", "Git repository αρχικοποιήθηκε!")
             self.detect_current_branch() # Ενημέρωση branch μετά το init
+            return True # Επιστρέφουμε True για επιτυχία
+        return False # Επιστρέφουμε False για αποτυχία
 
     def add_all(self):
         """Προσθέτει όλα τα αρχεία στην περιοχή staging του Git."""
+        if not self.ensure_git_initialized():
+            messagebox.showerror("Σφάλμα", "Αποτυχία αρχικοποίησης git repository.")
+            return False
         self.print_to_console("\n--- Προσθήκη όλων των αρχείων στην περιοχή staging ---\n")
         if self.run_git_command(["git", "add", "."]):
             self.print_to_console("Όλα τα αρχεία προστέθηκαν στην περιοχή staging.\n")
             messagebox.showinfo("Επιτυχία", "Όλα τα αρχεία προστέθηκαν στην περιοχή staging!")
+            return True # Επιστρέφουμε True για επιτυχία
+        return False # Επιστρέφουμε False για αποτυχία
 
     def commit_files(self):
         """Κάνει commit τα αρχεία που βρίσκονται σε staging με το καθορισμένο μήνυμα."""
+        if not self.ensure_git_initialized():
+            messagebox.showerror("Σφάλμα", "Αποτυχία αρχικοποίησης git repository.")
+            return False
         message = self.commit_message.get()
         if not message:
             messagebox.showwarning("Προειδοποίηση", "Παρακαλώ εισάγετε ένα μήνυμα commit.")
-            return
+            return False # Επιστρέφουμε False
 
         project_path = self.project_path.get()
         if not project_path:
             messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα φάκελο έργου πρώτα.")
-            return
+            return False # Επιστρέφουμε False
 
         # Ελέγχουμε αν έχουν οριστεί user.email και user.name για αυτό το repository
         original_dir = os.getcwd()
@@ -409,24 +420,29 @@ class GitGUIApp:
         if not email_check_process.stdout.strip() or not name_check_process.stdout.strip():
             messagebox.showwarning("Προειδοποίηση", "Δεν έχουν οριστεί email και όνομα χρήστη για αυτό το repository. Επιλέξτε και εφαρμόστε ένα προφίλ.")
             self.print_to_console("Προειδοποίηση: Δεν έχουν οριστεί email και όνομα χρήστη για αυτό το repository. Χρησιμοποιήστε την ενότητα 'Διαχείριση Προφίλ Git' για να εφαρμόσετε ένα προφίλ.\n")
-            return
+            return False # Επιστρέφουμε False
             
         self.print_to_console(f"\n--- Commit με μήνυμα: '{message}' ---\n")
         if self.run_git_command(["git", "commit", "-m", message]):
             self.print_to_console(f"Τα αρχεία έγιναν commit επιτυχώς με μήνυμα: '{message}'.\n")
             messagebox.showinfo("Επιτυχία", "Τα αρχεία έγιναν commit επιτυχώς!")
+            return True # Επιστρέφουμε True
+        return False # Επιστρέφουμε False
 
     def set_remote(self):
         """Ορίζει το remote origin URL."""
+        if not self.ensure_git_initialized():
+            messagebox.showerror("Σφάλμα", "Αποτυχία αρχικοποίησης git repository.")
+            return False
         repo_url = self.repo_url.get()
         if not repo_url:
             messagebox.showwarning("Προειδοποίηση", "Παρακαλώ εισάγετε το URL του απομακρυσμένου repository.")
-            return
+            return False # Επιστρέφουμε False
         
         project_path = self.project_path.get()
         if not project_path:
             messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα φάκελο έργου πρώτα.")
-            return False
+            return False # Επιστρέφουμε False
 
         self.print_to_console(f"\n--- Ορισμός remote origin σε: {repo_url} ---\n")
 
@@ -450,37 +466,123 @@ class GitGUIApp:
             self.print_to_console("Το remote 'origin' υπάρχει ήδη. Προσπάθεια αφαίρεσης και επαναπροσθήκης...\n")
             if not self.run_git_command(["git", "remote", "remove", "origin"]):
                 messagebox.showerror("Σφάλμα Git", "Αποτυχία αφαίρεσης του υπάρχοντος remote 'origin'.")
-                return 
+                return False # Διακοπή αν αποτύχει η αφαίρεση
             self.print_to_console("Το υπάρχον 'origin' αφαιρέθηκε επιτυχώς.\n")
         
         if self.run_git_command(["git", "remote", "add", "origin", repo_url]):
             self.print_to_console("Το remote 'origin' προστέθηκε/επαναπροστέθηκε επιτυχώς.\n")
             messagebox.showinfo("Επιτυχία", "Το remote 'origin' ορίστηκε!")
-        else:
-            messagebox.showerror("Σφάλμα Git", "Αποτυχία ορισμού του remote 'origin'.")
+            return True # Επιστρέφουμε True
+        return False # Επιστρέφουμε False
 
     def push_to_git(self):
         """Κάνει push τις αλλαγές που έγιναν commit στο απομακρυσμένο repository."""
+        if not self.ensure_git_initialized():
+            messagebox.showerror("Σφάλμα", "Αποτυχία αρχικοποίησης git repository.")
+            return False
         self.print_to_console("\n--- Push στο Git repository ---\n")
         
         project_path = self.project_path.get()
         if not project_path:
             messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα φάκελο έργου πρώτα.")
-            return False
+            return False # Επιστρέφουμε False
 
         # Χρησιμοποιούμε το branch από το πεδίο current_branch
         branch_to_push = self.current_branch.get().strip()
         if not branch_to_push:
             messagebox.showwarning("Προειδοποίηση", "Παρακαλώ εισάγετε το όνομα του branch για push.")
-            return
+            return False # Επιστρέφουμε False
 
         self.print_to_console(f"Προσπάθεια push στο branch: {branch_to_push}\n")
         
         if self.run_git_command(["git", "push", "-u", "origin", branch_to_push]):
             self.print_to_console("Επιτυχής push στο Git repository!\n")
             messagebox.showinfo("Επιτυχία", "Το έργο ανέβηκε επιτυχώς στο Git!")
-        else:
-            self.print_to_console("Αποτυχία push στο Git repository. Ελέγξτε την κονσόλα για σφάλματα.\n")
+            return True # Επιστρέφουμε True
+        return False # Επιστρέφουμε False
+
+    # --- Νέα συνάρτηση για την εκτέλεση όλων των λειτουργιών ---
+    def execute_all_git_operations(self):
+        self.print_to_console("\n--- Έναρξη Εκτέλεσης Όλων των Λειτουργιών Git ---\n")
+        if not self.ensure_git_initialized():
+            messagebox.showerror("Σφάλμα", "Αποτυχία αρχικοποίησης git repository.")
+            self.print_to_console("Διακόπηκε: Αποτυχία αρχικοποίησης git repository.\n")
+            return
+        # 0. Προϋποθέσεις
+        project_path = self.project_path.get()
+        repo_url = self.repo_url.get()
+        selected_profile_name = self.selected_profile_name.get()
+
+        if not project_path:
+            messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα φάκελο έργου.")
+            self.print_to_console("Διακόπηκε: Δεν επιλέχθηκε φάκελος έργου.\n")
+            return
+        if not repo_url:
+            messagebox.showerror("Σφάλμα", "Παρακαλώ εισάγετε το URL του απομακρυσμένου repository.")
+            self.print_to_console("Διακόπηκε: Δεν εισήχθη URL απομακρυσμένου repository.\n")
+            return
+        if not selected_profile_name or selected_profile_name == "-- Καθόλου Προφίλ --":
+            messagebox.showerror("Σφάλμα", "Παρακαλώ επιλέξτε ένα προφίλ Git από το dropdown.")
+            self.print_to_console("Διακόπηκε: Δεν επιλέχθηκε προφίλ Git.\n")
+            return
+
+        # Εφαρμόζουμε το επιλεγμένο προφίλ (email, username, default_branch) για το project
+        self.print_to_console("Εφαρμογή επιλεγμένου προφίλ...")
+        # Η apply_selected_profile() καλείται εδώ, και μέσα της γίνεται και το set του current_branch
+        if not self.apply_selected_profile(): 
+            messagebox.showerror("Σφάλμα", "Αποτυχία εφαρμογής προφίλ. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία εφαρμογής προφίλ.\n")
+            return
+
+        # 1. Αρχικοποίηση Git
+        self.print_to_console("\nΒήμα 1/5: Αρχικοποίηση Git...")
+        if not self.init_git():
+            messagebox.showerror("Σφάλμα", "Βήμα 1: Αποτυχία αρχικοποίησης Git. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία αρχικοποίησης Git.\n")
+            return
+
+        # 2. Προσθήκη Όλων των Αρχείων
+        self.print_to_console("\nΒήμα 2/5: Προσθήκη όλων των αρχείων...")
+        if not self.add_all():
+            messagebox.showerror("Σφάλμα", "Βήμα 2: Αποτυχία προσθήκης αρχείων. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία προσθήκης αρχείων.\n")
+            return
+
+        # 3. Commit
+        self.print_to_console("\nΒήμα 3/5: Δημιουργία Commit...")
+        if not self.commit_files():
+            messagebox.showerror("Σφάλμα", "Βήμα 3: Αποτυχία Commit. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία Commit.\n")
+            return
+
+        # 4. Ορισμός Remote URL
+        self.print_to_console("\nΒήμα 4/5: Ορισμός Remote URL...")
+        if not self.set_remote():
+            messagebox.showerror("Σφάλμα", "Βήμα 4: Αποτυχία ορισμού Remote URL. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία ορισμού Remote URL.\n")
+            return
+
+        # 5. Push στο Git
+        self.print_to_console("\nΒήμα 5/5: Push στο Git...")
+        if not self.push_to_git():
+            messagebox.showerror("Σφάλμα", "Βήμα 5: Αποτυχία Push στο Git. Διακόπτεται η εκτέλεση.")
+            self.print_to_console("Διακόπηκε: Αποτυχία Push στο Git.\n")
+            return
+
+        self.print_to_console("\n--- Όλες οι λειτουργίες ολοκληρώθηκαν επιτυχώς! ---\n")
+        messagebox.showinfo("Επιτυχία", "Όλες οι λειτουργίες Git ολοκληρώθηκαν επιτυχώς!")
+
+    def ensure_git_initialized(self):
+        """Ελέγχει αν υπάρχει .git στον φάκελο έργου και αν όχι, κάνει αυτόματα git init."""
+        project_path = self.project_path.get()
+        if not project_path:
+            self.print_to_console("Σφάλμα: Δεν έχει επιλεχθεί φάκελος έργου για αρχικοποίηση git.\n")
+            return False
+        git_folder = os.path.join(project_path, ".git")
+        if not os.path.exists(git_folder):
+            self.print_to_console("Δεν βρέθηκε git repository. Γίνεται αυτόματη αρχικοποίηση...\n")
+            return self.init_git()
+        return True
 
 
 # Εκτέλεση κύριας εφαρμογής
