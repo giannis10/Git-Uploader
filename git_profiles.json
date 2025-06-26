@@ -1,10 +1,12 @@
 {
-    "Gihub": {
-        "email": "giatsimp@gmail.com",
-        "username": "giannis10"
-    },
     "Gitea": {
         "email": "giatsimp@gmail.com",
-        "username": "Giannis_G.T"
+        "username": "Giannis_G.T",
+        "default_branch": "main"
+    },
+    "Github": {
+        "email": "giatsimp@gmail.com",
+        "username": "giannis10",
+        "default_branch": "pi-hole"
     }
 }
