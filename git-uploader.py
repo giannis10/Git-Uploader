@@ -12,7 +12,7 @@ PROFILES_FILE = "git_profiles.json"
 class GitGUIApp:
     def __init__(self, master):
         self.master = master
-        master.title("Εύκολος Git Ανεβάτης")
+        master.title("Εύκολος Git Ανεβαστής")
         master.geometry("750x760") 
         master.resizable(False, False)
 
@@ -124,7 +124,7 @@ class GitGUIApp:
         # Clear Console Button
         tk.Button(master, text="Εκκαθάριση Κονσόλας", command=self.clear_console).grid(row=10, column=0, columnspan=3, pady=5) 
 
-        self.print_to_console("Καλώς ήρθατε στον Εύκολο Git Ανεβάτη!\n")
+        self.print_to_console("Καλώς ήρθατε στον Εύκολο Git Ανεβαστής!\n")
         self.print_to_console("Βεβαιωθείτε ότι το Git είναι εγκατεστημένο και διαθέσιμο στο PATH του συστήματός σας.\n")
         self.print_to_console("Επιλέξτε ή προσθέστε ένα προφίλ Git και πατήστε 'Εφαρμογή Προφίλ' πριν τις λειτουργίες Commit/Push.\n")
 
